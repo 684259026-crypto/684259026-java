@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attractions Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #474c7e;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin: 50px 0;
+        }
+
+        .error {
+            text-align: center;
+            color: #e74c3c;
+            background-color: #fadbd8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .attractions-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .attraction-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .attraction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .attraction-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .attraction-content {
+            padding: 20px;
+        }
+
+        .attraction-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .attraction-detail {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+
+        .attraction-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .coordinates {
+            display: flex;
+            gap: 15px;
+        }
+
+        .coordinate-item {
+            background-color: #ecf0f1;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .created-at {
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .attractions-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌍 World Attractions</h1>
+        <p>Discover amazing places around the globe</p>
+    </div>
+
+    <div id="loading" class="loading">Loading attractions...</div>
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="attractions-container" class="attractions-container"></div>
+
+    <script>
+        const apiUrl = 'https://www.melivecode.com/api/attractions';
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
+        const containerElement = document.getElementById('attractions-container');
+
+        async function fetchAttractions() {
+            try {
+                loadingElement.style.display = 'block';
+                errorElement.style.display = 'none';
+                
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const attractions = await response.json();
+                displayAttractions(attractions);
+                
+            } catch (error) {
+                console.error('Error fetching attractions:', error);
+                showError('Failed to load attractions. Please try again later.');
+            } finally {
+                loadingElement.style.display = 'none';
+            }
+        }
+
+        function displayAttractions(attractions) {
+            containerElement.innerHTML = '';
+            
+            attractions.forEach(attraction => {
+                const card = document.createElement('div');
+                card.className = 'attraction-card';
+                
+                const formattedDate = new Date(attraction.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                card.innerHTML = `
+                    <img src="${attraction.coverimage}" alt="${attraction.name}" class="attraction-image" 
+                         onerror="this.src='https://placehold.co/400x200?text=Image+Not+Available'">
+                    <div class="attraction-content">
+                        <h2 class="attraction-name">${attraction.name}</h2>
+                        <p class="attraction-detail">${attraction.detail}</p>
+                        <div class="attraction-info">
+                            <div class="coordinates">
+                                <span class="coordinate-item">📍 Lat: ${attraction.latitude.toFixed(6)}</span>
+                                <span class="coordinate-item">.getLongitude: ${attraction.longitude.toFixed(6)}</span>
+                            </div>
+                            <span class="created-at">Added: ${formattedDate}</span>
+                        </div>
+                    </div>
+                `;
+                
+                containerElement.appendChild(card);
+            });
+        }
+
+        function showError(message) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            containerElement.innerHTML = '';
+        }
+
+        // Fetch attractions when page loads
+        document.addEventListener('DOMContentLoaded', fetchAttractions);
+    </script>
+</body>
+</html>
